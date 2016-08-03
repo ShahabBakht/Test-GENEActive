@@ -1,16 +1,28 @@
-function TriggerAccData = TriggerAccData(time,GENEActiveData)
+function TriggerGENEActivData = TriggerAccData(time,GENEActivData,GENEActivClock,preTriggerWin,postTriggerWin)
 
 numEvents = size(time,1);
+GENEActivNumClock = nan(length(GENEActivClock),6);
+for clockcount = 1:length(GENEActivClock)
+    strClock = GENEActivClock{clockcount};
+    GENEActivNumClock(clockcount,:) = str2numGENEActiveClock(strClock);
+end
 
+TriggerGENEActivData = nan(numEvents,preTriggerWin + postTriggerWin + 1);
 for eventcount = 1:numEvents
     thisTime = time(eventcount,:);
     clock_ds = downsampleClock(thisTime);
+    iseqClock = (GENEActivNumClock == repmat(clock_ds,size(GENEActivNumClock,1),1));
+    pointer = find(sum(iseqClock,2) == 6);
+    if preTriggerWin > pointer
+        TriggerGENEActivData(eventcount,:) = GENEActivData(1:(pointer+postTriggerWin));
+    elseif (length(GENEActivData) - pointer) < postTriggerWin
+        TriggerGENEActivData(eventcount,:) = GENEActivData((pointer-preTriggerWin):end);
+    else
+        TriggerGENEActivData(eventcount,:) = GENEActivData((pointer-preTriggerWin):(pointer+postTriggerWin));
+    end
     
     
-    
-    
-%     thisTimeString = [num2str(thisTime(1)),'-',
-    
+   
 end
 end
 
@@ -43,15 +55,9 @@ thisDay = thisTime(3);
 %    
 % end
     
-if ~(criticalHour || criticalMinute || criticalSecond || criticalmiliSecond)
+
     
-    thisHour = thisTime(4);
-    thisMinute = thisTime(5);
-    thisSecond = floor(thisTime(6));
-    thisnewmiliSecond = round(thismiliSecond/10)*10;
-    thismiliSecond = thisnewmiliSecond;
-    
-elseif criticalmiliSecond && ~(criticalHour || criticalMinute || criticalSecond)
+if criticalmiliSecond && ~(criticalHour || criticalMinute || criticalSecond)
     
     thisHour = thisTime(4);
     thisMinute = thisTime(5);
@@ -79,7 +85,15 @@ elseif (criticalmiliSecond && criticalSecond && criticalMinute && criticalHour)
     thisMinute = 0;
     thisSecond = 0;
     thismiliSecond = 0;
-
+    
+else 
+    
+    thisHour = thisTime(4);
+    thisMinute = thisTime(5);
+    thisSecond = floor(thisTime(6));
+    thisnewmiliSecond = round(thismiliSecond/10)*10;
+    thismiliSecond = thisnewmiliSecond;
+    
 end
 
 clock_ds = [thisYear, thisMonth, thisDay, thisHour, thisMinute, (thisSecond + thismiliSecond/1000)];
@@ -89,5 +103,14 @@ end
 function numClock = str2numGENEActiveClock(strClock)
 % This function takes the GENEActive string format clock as input and gives
 % the MATLAB clock format as output.
+thisYear = str2num(strClock(1:4));
+thisMonth = str2num(strClock(6:7));
+thisDay = str2num(strClock(9:10));
+thisHour = str2num(strClock(12:13));
+thisMinute = str2num(strClock(15:16));
+thisSecond = str2num(strClock(18:19));
+thismiliSecond = str2num(strClock(21:23));
+
+numClock = [thisYear,thisMonth,thisDay,thisHour,thisMinute,thisSecond+thismiliSecond/1000];
 
 end

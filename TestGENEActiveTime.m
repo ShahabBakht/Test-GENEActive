@@ -1,6 +1,6 @@
 function [timePressKey,timeLeaveKey, globals] = TestGENEActiveTime
 
-NumTrials = 5;
+NumTrials = 20;
 OnButtonTime = 2;
 PressButtonTime = 2;
 LeaveButtonTime = 2;
